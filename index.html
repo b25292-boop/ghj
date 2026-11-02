@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science Experiment Simulators</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            /* Colorful vibrant gradient background */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* FULLSCREEN BUTTON */
+        .btn-fullscreen {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .btn-fullscreen:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            /* Glassmorphism effect */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Buttons */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        button.sim-btn {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            color: #333;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button.sim-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-gravity { background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%) !important; }
+        .btn-friction { background: linear-gradient(120deg, #fccb90 0%, #d57eeb 100%) !important; }
+        .btn-back { background: rgba(255,255,255,0.2); color: white; border: none; cursor: pointer; margin-bottom: 20px; font-size: 1rem; padding: 10px 20px; border-radius: 50px;}
+        .btn-back:hover { background: rgba(255,255,255,0.3); }
+
+        /* Sections */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Controls Panel */
+        .controls {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            text-align: left;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* Data Display */
+        .data-panel {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        /* Gravity Canvas/Area */
+        .gravity-area {
+            position: relative;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .mass {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.5);
+            transition: width 0.2s, height 0.2s, transform 0.2s;
+        }
+
+        .mass-1 { background: radial-gradient(circle at 30% 30%, #ff4b2b, #ff416c); }
+        .mass-2 { background: radial-gradient(circle at 30% 30%, #11998e, #38ef7d); }
+        
+        .man {
+            position: absolute;
+            font-size: 40px;
+            bottom: 20px;
+            z-index: 10;
+        }
+
+        /* Friction Area */
+        .friction-area {
+            position: relative;
+            height: 250px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            background: #553c2a;
+            border-top: 5px solid #2d1e13;
+        }
+
+        .block {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .pusher {
+            position: absolute;
+            bottom: 50px;
+            font-size: 50px;
+            transition: left 0.1s;
+        }
+
+        .status-msg {
+            color: #ffeaa7;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- FULLSCREEN TOGGLE BUTTON -->
+    <button class="btn-fullscreen" id="fs-btn" onclick="toggleFullScreen()">⛶ Fullscreen</button>
+
+    <div class="container">
+        <!-- HOME SCREEN -->
+        <div id="home-screen" class="screen active">
+            <h1>Simulator for Science Experiment</h1>
+            <p style="margin-bottom: 30px; font-size: 1.2rem;">Select an experiment to begin.</p>
+            <div class="btn-container">
+                <button class="sim-btn btn-gravity" onclick="navigate('gravity-screen')">🪐 Gravitational Simulator</button>
+                <button class="sim-btn btn-friction" onclick="navigate('friction-screen')">📦 Friction Simulator</button>
+            </div>
+        </div>
+
+        <!-- GRAVITY SIMULATOR -->
+        <div id="gravity-screen" class="screen">
+            <button class="btn-back" onclick="navigate('home-screen')">← Back to Menu</button>
+            <h2>Gravitational Force Simulator</h2>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label>Mass 1 (M1): <span id="m1-val">50</span> kg</label>
+                    <input type="range" id="m1-slider" min="10" max="200" value="50">
+                </div>
+                <div class="control-group">
+                    <label>Mass 2 (M2): <span id="m2-val">50</span> kg</label>
+                    <input type="range" id="m2-slider" min="10" max="200" value="50">
+                </div>
+                <div class="control-group">
+                    <label>Distance (r): <span id="r-val">5</span> m</label>
+                    <input type="range" id="r-slider" min="2" max="15" value="5">
+                </div>
+            </div>
+
+            <div class="data-panel">
+                Force (F) = <span id="g-force-val">0</span> N
+            </div>
+
+            <div class="gravity-area">
+                <div class="man" title="Scale Reference">🧍‍♂️</div>
+                <div class="mass mass-1" id="mass1">M1</div>
+                <div class="mass mass-2" id="mass2">M2</div>
+            </div>
+        </div>
+
+        <!-- FRICTION SIMULATOR -->
+        <div id="friction-screen" class="screen">
+            <button class="btn-back" onclick="navigate('home-screen')">← Back to Menu</button>
+            <h2>Friction Simulator</h2>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Block Mass (m): <span id="f-mass-val">10</span> kg</label>
+                    <input type="range" id="f-mass-slider" min="1" max="50" value="10">
+                </div>
+                <div class="control-group">
+                    <label>Friction Coeff (μ): <span id="mu-val">0.3</span></label>
+                    <input type="range" id="mu-slider" min="0.0" max="1.0" step="0.05" value="0.3">
+                </div>
+                <div class="control-group">
+                    <label>Applied Force: <span id="app-force-val">0</span> N</label>
+                    <input type="range" id="app-force-slider" min="0" max="300" value="0">
+                </div>
+            </div>
+
+            <div class="btn-container" style="margin-top: 10px;">
+                <button class="sim-btn" onclick="startPush()" style="background: #00b894; color: white;">Push Block</button>
+                <button class="sim-btn" onclick="resetFriction()" style="background: #d63031; color: white;">Reset</button>
+            </div>
+
+            <div class="data-panel" style="font-size: 1.2rem;">
+                Friction Force limit: <span id="fric-force-limit">29.4</span> N <br>
+                Net Force: <span id="net-force-val">0</span> N 
+                <div class="status-msg" id="fric-status">The block is at rest.</div>
+            </div>
+
+            <div class="friction-area">
+                <div class="ground"></div>
+                <div class="pusher" id="pusher">🏃</div>
+                <div class="block" id="f-block">10kg</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- FULLSCREEN LOGIC ---
+        function toggleFullScreen() {
+            const btn = document.getElementById('fs-btn');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    alert(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                btn.innerText = "🗗 Exit Fullscreen";
+            } else {
+                document.exitFullscreen();
+                btn.innerText = "⛶ Fullscreen";
+            }
+        }
+
+        // --- NAVIGATION ---
+        function navigate(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            
+            // Trigger initial calculations when opening a screen
+            if (screenId === 'gravity-screen') updateGravity();
+            if (screenId === 'friction-screen') resetFriction();
+        }
+
+        // --- GRAVITY SIMULATOR LOGIC ---
+        const G = 6.674e-11; // Gravitational Constant
+        const G_VISUAL = 6.674; 
+
+        const m1Slider = document.getElementById('m1-slider');
+        const m2Slider = document.getElementById('m2-slider');
+        const rSlider = document.getElementById('r-slider');
+        
+        const mass1Obj = document.getElementById('mass1');
+        const mass2Obj = document.getElementById('mass2');
+
+        function updateGravity() {
+            let m1 = parseFloat(m1Slider.value);
+            let m2 = parseFloat(m2Slider.value);
+            let r = parseFloat(rSlider.value);
+
+            document.getElementById('m1-val').innerText = m1;
+            document.getElementById('m2-val').innerText = m2;
+            document.getElementById('r-val').innerText = r;
+
+            let force = (G_VISUAL * m1 * m2) / (r * r);
+            document.getElementById('g-force-val').innerText = force.toFixed(2) + " x 10⁻⁸";
+
+            let center = 50; 
+            let spread = (r / 15) * 40; 
+
+            mass1Obj.style.left = `calc(${center - spread}% - ${m1/2}px)`;
+            mass2Obj.style.left = `calc(${center + spread}% - ${m2/2}px)`;
+
+            mass1Obj.style.width = (m1 * 0.8 + 20) + "px";
+            mass1Obj.style.height = (m1 * 0.8 + 20) + "px";
+            
+            mass2Obj.style.width = (m2 * 0.8 + 20) + "px";
+            mass2Obj.style.height = (m2 * 0.8 + 20) + "px";
+        }
+
+        m1Slider.addEventListener('input', updateGravity);
+        m2Slider.addEventListener('input', updateGravity);
+        rSlider.addEventListener('input', updateGravity);
+
+
+        // --- FRICTION SIMULATOR LOGIC ---
+        const fMassSlider = document.getElementById('f-mass-slider');
+        const muSlider = document.getElementById('mu-slider');
+        const appForceSlider = document.getElementById('app-force-slider');
+        const block = document.getElementById('f-block');
+        const pusher = document.getElementById('pusher');
+        const statusMsg = document.getElementById('fric-status');
+
+        let blockPos = 50;
+        let animationFrame;
+        let velocity = 0;
+        let isPushing = false;
+
+        function updateFrictionValues() {
+            let mass = parseFloat(fMassSlider.value);
+            let mu = parseFloat(muSlider.value);
+            let appliedForce = parseFloat(appForceSlider.value);
+            const g = 9.8; 
+
+            document.getElementById('f-mass-val').innerText = mass;
+            document.getElementById('mu-val').innerText = mu.toFixed(2);
+            document.getElementById('app-force-val').innerText = appliedForce;
+            block.innerText = mass + "kg";
+
+            let normalForce = mass * g;
+            let maxStaticFriction = mu * normalForce;
+            document.getElementById('fric-force-limit').innerText = maxStaticFriction.toFixed(2);
+
+            let netForce = 0;
+            if (appliedForce > maxStaticFriction) {
+                netForce = appliedForce - maxStaticFriction; 
+                statusMsg.innerText = "Applied force overcomes friction! Block will accelerate.";
+                statusMsg.style.color = "#55efc4";
+            } else if (appliedForce > 0) {
+                netForce = 0;
+                statusMsg.innerText = "Friction is too strong! Block won't move.";
+                statusMsg.style.color = "#ff7675";
+            } else {
+                statusMsg.innerText = "The block is at rest.";
+                statusMsg.style.color = "#ffeaa7";
+            }
+
+            document.getElementById('net-force-val').innerText = netForce.toFixed(2);
+            return { netForce, mass };
+        }
+
+        fMassSlider.addEventListener('input', updateFrictionValues);
+        muSlider.addEventListener('input', updateFrictionValues);
+        appForceSlider.addEventListener('input', updateFrictionValues);
+
+        function startPush() {
+            if (isPushing) return;
+            isPushing = true;
+            let { netForce, mass } = updateFrictionValues();
+            
+            let acceleration = netForce / mass;
+
+            function animate() {
+                if(acceleration > 0) {
+                    velocity += acceleration * 0.05; 
+                    blockPos += velocity;
+                    
+                    block.style.left = blockPos + "px";
+                    pusher.style.left = (blockPos - 60) + "px";
+
+                    if (blockPos < document.querySelector('.friction-area').offsetWidth) {
+                        animationFrame = requestAnimationFrame(animate);
+                    } else {
+                        isPushing = false;
+                    }
+                } else {
+                    pusher.style.left = (blockPos - 45) + "px"; 
+                    setTimeout(() => { pusher.style.left = (blockPos - 60) + "px"; }, 200);
+                    isPushing = false;
+                }
+            }
+            
+            pusher.style.left = (blockPos - 60) + "px";
+            animate();
+        }
+
+        function resetFriction() {
+            cancelAnimationFrame(animationFrame);
+            isPushing = false;
+            velocity = 0;
+            blockPos = 50;
+            block.style.left = blockPos + "px";
+            pusher.style.left = "-60px"; 
+            appForceSlider.value = 0;
+            updateFrictionValues();
+            pusher.style.left = (blockPos - 60) + "px";
+        }
+    </script>
+</body>
+</html>
